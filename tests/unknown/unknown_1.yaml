@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Unknown
+metadata:
+  name: wave1
+  namespace: test-1
+  annotations:
+    config.kubernetes.io/sync-wave: "1"

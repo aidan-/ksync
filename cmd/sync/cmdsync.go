@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aidan-/ksync/pkg/waveapply"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
@@ -149,7 +150,7 @@ func (r *Runner) RunE(cmd *cobra.Command, args []string) error {
 		r.printStatusEvents = true
 	}
 
-	ch := a.Run(ctx, inv, objs, apply.ApplierOptions{
+	options := apply.ApplierOptions{
 		ServerSideOptions: r.serverSideOptions,
 		ReconcileTimeout:  r.reconcileTimeout,
 		// If we are not waiting for status, tell the applier to not
@@ -160,7 +161,10 @@ func (r *Runner) RunE(cmd *cobra.Command, args []string) error {
 		PrunePropagationPolicy: prunePropPolicy,
 		PruneTimeout:           r.pruneTimeout,
 		InventoryPolicy:        inventoryPolicy,
-	})
+	}
+
+	waveRunner := waveapply.NewWaveApplier()
+	ch := waveRunner.Run(ctx, inv, objs, a, options)
 
 	// The printer will print updates from the channel. It will block
 	// until the channel is closed.

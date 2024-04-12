@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wave2
+  namespace: test-1
+  annotations:
+    config.kubernetes.io/sync-wave: "2"
