@@ -1,21 +1,27 @@
 package syncwave
 
-import "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+import (
+	"sort"
 
-func GroupUnstructureds(unstructureds []*unstructured.Unstructured) map[string][]*unstructured.Unstructured {
-	grouped := make(map[string][]*unstructured.Unstructured)
-	for _, u := range unstructureds {
-		wave := u.GetAnnotations()[Annotation]
-		if wave == "" {
-			wave = "0"
+	"sigs.k8s.io/cli-utils/pkg/object"
+)
+
+func GroupUnstructureds(objects object.UnstructuredSet) ([]int, map[int]object.UnstructuredSet, error) {
+	grouped := make(map[int]object.UnstructuredSet)
+	for _, obj := range objects {
+		wave, err := ReadAnnotation(obj)
+		if err != nil {
+			return nil, nil, err
 		}
-		grouped[wave] = append(grouped[wave], u)
+		grouped[wave] = append(grouped[wave], obj)
 	}
 
-	waves := make([]string, 0)
-	for wave, _ := range grouped {
+	// Create ordered slice of wave numbers.
+	waves := make([]int, 0, len(grouped))
+	for wave := range grouped {
 		waves = append(waves, wave)
 	}
+	sort.Ints(waves)
 
-	return grouped
+	return waves, grouped, nil
 }

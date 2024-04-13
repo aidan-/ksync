@@ -3,7 +3,6 @@ package waveapply
 import (
 	"context"
 	"fmt"
-	"sort"
 
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/cli-utils/pkg/apply"
@@ -35,18 +34,10 @@ func (w *WaveApplier) Run(
 ) <-chan event.Event {
 	klog.V(4).Infof("sync run for %d objects", len(objects))
 
-	// Group the objects by wave number.
-	grouped, err := groupWaves(objects)
+	waves, grouped, err := syncwave.GroupUnstructureds(objects)
 	if err != nil {
-		// TODO: Handle error.
+		// TODO: handle error properly.
 	}
-
-	// Create ordered slice of wave numbers.
-	waves := make([]int, 0, len(grouped))
-	for wave := range grouped {
-		waves = append(waves, wave)
-	}
-	sort.Ints(waves)
 
 	klog.V(4).Infof("identified %d sync waves: %v", len(waves), waves)
 
@@ -71,6 +62,8 @@ func (w *WaveApplier) Run(
 			for e := range ch {
 				// TODO: Need to actually process the events before forwarding them
 				// to the event channel.
+				// We want to emit wave events but the strict structure o the event.Event
+				// struct means we probably need to wrap it in a new event type.
 				eventChannel <- e
 			}
 		}
@@ -78,13 +71,17 @@ func (w *WaveApplier) Run(
 	return eventChannel
 }
 
+// waveInvInfo creates a new inventory object for the given wave based on the
+// original inventory object.
+// The wave number is added to the inventory data as a suffix to the name and
+// the inventory label.
 func waveInvInfo(invInfo inventory.Info, wave int) (inventory.Info, error) {
 	cm := inventory.InvInfoToConfigMap(invInfo)
 	if cm == nil {
 		return nil, fmt.Errorf("failed to convert inventory info to config map")
 	}
-
 	cmWave := cm.DeepCopy()
+
 	// Add the wave key to the inventory data.
 	waveKeySuffix := fmt.Sprintf("-wave%d", wave)
 	cmWave.SetName(cm.GetName() + waveKeySuffix)
@@ -97,17 +94,4 @@ func waveInvInfo(invInfo inventory.Info, wave int) (inventory.Info, error) {
 	cmWave.SetLabels(labels)
 
 	return inventory.WrapInventoryInfoObj(cmWave), nil
-}
-
-func groupWaves(objects object.UnstructuredSet) (map[int]object.UnstructuredSet, error) {
-	grouped := make(map[int]object.UnstructuredSet)
-	for _, obj := range objects {
-		wave, err := syncwave.ReadAnnotation(obj)
-		if err != nil {
-			return nil, err
-		}
-		grouped[wave] = append(grouped[wave], obj)
-	}
-
-	return grouped, nil
 }

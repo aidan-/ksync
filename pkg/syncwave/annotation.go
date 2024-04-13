@@ -27,8 +27,8 @@ func ReadAnnotation(u *unstructured.Unstructured) (int, error) {
 	if u == nil {
 		return 0, nil
 	}
-	waveStr := u.GetAnnotations()[Annotation]
-	if waveStr == "" {
+	waveStr, ok := u.GetAnnotations()[Annotation]
+	if waveStr == "" || !ok {
 		return 0, nil
 	}
 
