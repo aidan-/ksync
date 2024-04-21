@@ -17,6 +17,9 @@ import (
 type Validator struct {
 	Mapper    meta.RESTMapper
 	Collector *Collector
+
+	// IgnoreUnknownTypes will ignore unknown types when validating the resources.
+	IgnoreUnknownTypes bool
 }
 
 // Validate validates the provided resources. A RESTMapper will be used
@@ -80,6 +83,9 @@ func (v *Validator) validateNamespace(u *unstructured.Unstructured, crds []*unst
 	}
 	scope, err := object.LookupResourceScope(u, crds, v.Mapper)
 	if err != nil {
+		if _, ok := err.(*object.UnknownTypeError); ok && v.IgnoreUnknownTypes {
+			return nil
+		}
 		return err
 	}
 

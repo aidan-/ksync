@@ -111,8 +111,9 @@ func (a *Applier) Run(ctx context.Context, invInfo inventory.Info, objects objec
 		// before anything has been updated in the cluster.
 		vCollector := &validation.Collector{}
 		validator := &validation.Validator{
-			Collector: vCollector,
-			Mapper:    a.mapper,
+			Collector:          vCollector,
+			Mapper:             a.mapper,
+			IgnoreUnknownTypes: options.IgnoreUnknownTypes,
 		}
 		validator.Validate(objects)
 
@@ -293,6 +294,9 @@ type ApplierOptions struct {
 	// RESTScopeStrategy specifies which strategy to use when listing and
 	// watching resources. By default, the strategy is selected automatically.
 	WatcherRESTScopeStrategy watcher.RESTScopeStrategy
+
+	// IgnoreUnknownTypes specifies whether to ignore unknown object types.
+	IgnoreUnknownTypes bool
 }
 
 // setDefaults set the options to the default values if they

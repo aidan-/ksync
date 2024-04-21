@@ -21,9 +21,10 @@ import (
 
 func TestSetNamespaces(t *testing.T) {
 	testCases := map[string]struct {
-		objs             []*unstructured.Unstructured
-		defaultNamespace string
-		enforceNamespace bool
+		objs               []*unstructured.Unstructured
+		defaultNamespace   string
+		enforceNamespace   bool
+		ignoreUnknownTypes bool
 
 		expectedNamespaces []string
 		expectedErr        error
@@ -41,8 +42,9 @@ func TestSetNamespaces(t *testing.T) {
 					Kind:    "PodDisruptionBudget",
 				}, "default"),
 			},
-			defaultNamespace: "foo",
-			enforceNamespace: false,
+			defaultNamespace:   "foo",
+			enforceNamespace:   false,
+			ignoreUnknownTypes: false,
 			expectedNamespaces: []string{
 				"default",
 				"default",
@@ -58,6 +60,7 @@ func TestSetNamespaces(t *testing.T) {
 			},
 			defaultNamespace:   "foo",
 			enforceNamespace:   false,
+			ignoreUnknownTypes: false,
 			expectedNamespaces: []string{"foo"},
 		},
 		"resource with namespace that does match enforced ns": {
@@ -70,6 +73,7 @@ func TestSetNamespaces(t *testing.T) {
 			},
 			defaultNamespace:   "bar",
 			enforceNamespace:   true,
+			ignoreUnknownTypes: false,
 			expectedNamespaces: []string{"bar"},
 		},
 		"resource with namespace that doesn't match enforced ns": {
@@ -80,8 +84,9 @@ func TestSetNamespaces(t *testing.T) {
 					Kind:    "Deployment",
 				}, "foo"),
 			},
-			defaultNamespace: "bar",
-			enforceNamespace: true,
+			defaultNamespace:   "bar",
+			enforceNamespace:   true,
+			ignoreUnknownTypes: false,
 			expectedErr: &NamespaceMismatchError{
 				RequiredNamespace: "bar",
 				Namespace:         "foo",
@@ -106,6 +111,7 @@ func TestSetNamespaces(t *testing.T) {
 			},
 			defaultNamespace:   "bar",
 			enforceNamespace:   true,
+			ignoreUnknownTypes: false,
 			expectedNamespaces: []string{"", ""},
 		},
 		"namespace-scoped CR with CRD": {
@@ -127,6 +133,7 @@ func TestSetNamespaces(t *testing.T) {
 			},
 			defaultNamespace:   "bar",
 			enforceNamespace:   true,
+			ignoreUnknownTypes: false,
 			expectedNamespaces: []string{"", "bar"},
 		},
 		"unknown types in CRs": {
@@ -173,7 +180,7 @@ func TestSetNamespaces(t *testing.T) {
 				crdGV.WithResource("customresourcedefinition"), meta.RESTScopeRoot)
 			mapper = meta.MultiRESTMapper([]meta.RESTMapper{mapper, crdMapper})
 
-			err = SetNamespaces(mapper, tc.objs, tc.defaultNamespace, tc.enforceNamespace)
+			err = SetNamespaces(mapper, tc.objs, tc.defaultNamespace, tc.enforceNamespace, tc.ignoreUnknownTypes)
 
 			if tc.expectedErr != nil {
 				require.Error(t, err)

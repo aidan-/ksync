@@ -48,6 +48,6 @@ func (r *StreamManifestReader) Read() ([]*unstructured.Unstructured, error) {
 
 	objs = FilterLocalConfig(objs)
 
-	err = SetNamespaces(r.Mapper, objs, r.Namespace, r.EnforceNamespace)
+	err = SetNamespaces(r.Mapper, objs, r.Namespace, r.EnforceNamespace, r.IgnoreUnknownTypes)
 	return objs, err
 }

@@ -53,7 +53,7 @@ func (e *NamespaceMismatchError) Error() string {
 // this by first checking the RESTMapper, and it there is not match there,
 // it will look for CRDs in the provided Unstructureds.
 func SetNamespaces(mapper meta.RESTMapper, objs []*unstructured.Unstructured,
-	defaultNamespace string, enforceNamespace bool) error {
+	defaultNamespace string, enforceNamespace bool, ignoreUnknownTypes bool) error {
 	var crdObjs []*unstructured.Unstructured
 
 	// find any crds in the set of resources.
@@ -77,9 +77,11 @@ func SetNamespaces(mapper meta.RESTMapper, objs []*unstructured.Unstructured,
 		if err != nil {
 			var unknownTypeError *object.UnknownTypeError
 			if errors.As(err, &unknownTypeError) {
-				// If no scope was found, just add the resource type to the list
-				// of unknown types.
-				unknownGVKs = append(unknownGVKs, unknownTypeError.GroupVersionKind)
+				if !ignoreUnknownTypes {
+					// If no scope was found, just add the resource type to the list
+					// of unknown types.
+					unknownGVKs = append(unknownGVKs, unknownTypeError.GroupVersionKind)
+				}
 				continue
 			}
 			// If something went wrong when looking up the scope, just

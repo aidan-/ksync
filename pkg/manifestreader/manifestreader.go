@@ -17,8 +17,9 @@ type ManifestReader interface {
 // ReaderOptions defines the shared inputs for the different
 // implementations of the ManifestReader interface.
 type ReaderOptions struct {
-	Mapper           meta.RESTMapper
-	Validate         bool
-	Namespace        string
-	EnforceNamespace bool
+	Mapper             meta.RESTMapper
+	Validate           bool
+	Namespace          string
+	EnforceNamespace   bool
+	IgnoreUnknownTypes bool
 }

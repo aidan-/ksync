@@ -162,6 +162,9 @@ func (r *Runner) RunE(cmd *cobra.Command, args []string) error {
 		PrunePropagationPolicy: prunePropPolicy,
 		PruneTimeout:           r.pruneTimeout,
 		InventoryPolicy:        inventoryPolicy,
+
+		// TODO: make this configurable
+		IgnoreUnknownTypes: true,
 	})
 
 	// The printer will print updates from the channel. It will block

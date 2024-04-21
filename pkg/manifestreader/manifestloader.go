@@ -47,6 +47,8 @@ func (f *manifestLoader) ManifestReader(reader io.Reader, path string) (Manifest
 		Mapper:           mapper,
 		Namespace:        namespace,
 		EnforceNamespace: enforceNamespace,
+		// TODO: Plumbing this in from the command line is a bit tricky.
+		IgnoreUnknownTypes: true,
 	}
 
 	return mReader(path, reader, readerOptions), nil

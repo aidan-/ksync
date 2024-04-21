@@ -59,6 +59,8 @@ type ApplyTask struct {
 	Mutators          []mutator.Interface
 	DryRunStrategy    common.DryRunStrategy
 	ServerSideOptions common.ServerSideOptions
+
+	IgnoreUnknownTypes bool
 }
 
 // applyOptionsFactoryFunc is a factory function for creating a new

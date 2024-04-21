@@ -45,6 +45,6 @@ func (p *PathManifestReader) Read() ([]*unstructured.Unstructured, error) {
 
 	objs = FilterLocalConfig(objs)
 
-	err = SetNamespaces(p.Mapper, objs, p.Namespace, p.EnforceNamespace)
+	err = SetNamespaces(p.Mapper, objs, p.Namespace, p.EnforceNamespace, p.IgnoreUnknownTypes)
 	return objs, err
 }
