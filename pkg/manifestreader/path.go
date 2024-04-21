@@ -5,12 +5,13 @@ package manifestreader
 
 import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	mr "sigs.k8s.io/cli-utils/pkg/manifestreader"
 	"sigs.k8s.io/kustomize/kyaml/kio"
 	"sigs.k8s.io/kustomize/kyaml/kio/kioutil"
 )
 
 // PathManifestReader implements ManifestReader interface.
-var _ ManifestReader = &PathManifestReader{}
+var _ mr.ManifestReader = &PathManifestReader{}
 
 // PathManifestReader reads manifests from the provided path
 // and returns them as Info objects. The returned Infos will not have
@@ -18,7 +19,7 @@ var _ ManifestReader = &PathManifestReader{}
 type PathManifestReader struct {
 	Path string
 
-	ReaderOptions
+	mr.ReaderOptions
 }
 
 // Read reads the manifests and returns them as Info objects.
@@ -32,18 +33,18 @@ func (p *PathManifestReader) Read() ([]*unstructured.Unstructured, error) {
 	}
 
 	for _, n := range nodes {
-		err = RemoveAnnotations(n, kioutil.IndexAnnotation)
+		err = mr.RemoveAnnotations(n, kioutil.IndexAnnotation)
 		if err != nil {
 			return objs, err
 		}
-		u, err := KyamlNodeToUnstructured(n)
+		u, err := mr.KyamlNodeToUnstructured(n)
 		if err != nil {
 			return objs, err
 		}
 		objs = append(objs, u)
 	}
 
-	objs = FilterLocalConfig(objs)
+	objs = mr.FilterLocalConfig(objs)
 
 	return objs, err
 }

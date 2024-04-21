@@ -10,12 +10,6 @@ import (
 	mr "sigs.k8s.io/cli-utils/pkg/manifestreader"
 )
 
-// ManifestLoader is an interface for reading
-// and parsing the resources
-type ManifestLoader interface {
-	ManifestReader(reader io.Reader, path string) (ManifestReader, error)
-}
-
 // manifestLoader implements the ManifestLoader interface
 type manifestLoader struct {
 	factory util.Factory
@@ -44,7 +38,7 @@ func (f *manifestLoader) ManifestReader(reader io.Reader, path string) (mr.Manif
 		return nil, err
 	}
 
-	readerOptions := ReaderOptions{
+	readerOptions := mr.ReaderOptions{
 		Mapper:           mapper,
 		Namespace:        namespace,
 		EnforceNamespace: enforceNamespace,
@@ -54,8 +48,8 @@ func (f *manifestLoader) ManifestReader(reader io.Reader, path string) (mr.Manif
 }
 
 // mReader returns the ManifestReader based in the input args
-func mReader(path string, reader io.Reader, readerOptions ReaderOptions) ManifestReader {
-	var mReader ManifestReader
+func mReader(path string, reader io.Reader, readerOptions mr.ReaderOptions) mr.ManifestReader {
+	var mReader mr.ManifestReader
 	// Read from stdin if "-" is specified, similar to kubectl
 	if path == "-" {
 		mReader = &StreamManifestReader{

@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	cmdtesting "k8s.io/kubectl/pkg/cmd/testing"
+	mr "sigs.k8s.io/cli-utils/pkg/manifestreader"
 )
 
 func TestStreamManifestReader_Read(t *testing.T) {
@@ -54,7 +55,7 @@ func TestStreamManifestReader_Read(t *testing.T) {
 			objs, err := (&StreamManifestReader{
 				ReaderName: "testReader",
 				Reader:     stringReader,
-				ReaderOptions: ReaderOptions{
+				ReaderOptions: mr.ReaderOptions{
 					Mapper:           mapper,
 					Namespace:        tc.namespace,
 					EnforceNamespace: tc.enforceNamespace,

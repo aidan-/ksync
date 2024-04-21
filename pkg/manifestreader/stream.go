@@ -7,12 +7,13 @@ import (
 	"io"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	mr "sigs.k8s.io/cli-utils/pkg/manifestreader"
 	"sigs.k8s.io/kustomize/kyaml/kio"
 	"sigs.k8s.io/kustomize/kyaml/kio/kioutil"
 )
 
 // StreamManifestReader implements ManifestReader interface.
-var _ ManifestReader = &StreamManifestReader{}
+var _ mr.ManifestReader = &StreamManifestReader{}
 
 // StreamManifestReader reads manifest from the provided io.Reader
 // and returns them as Info objects. The returned Infos will not have
@@ -21,7 +22,7 @@ type StreamManifestReader struct {
 	ReaderName string
 	Reader     io.Reader
 
-	ReaderOptions
+	mr.ReaderOptions
 }
 
 // Read reads the manifests and returns them as Info objects.
@@ -35,19 +36,19 @@ func (r *StreamManifestReader) Read() ([]*unstructured.Unstructured, error) {
 	}
 
 	for _, n := range nodes {
-		err = RemoveAnnotations(n, kioutil.IndexAnnotation)
+		err = mr.RemoveAnnotations(n, kioutil.IndexAnnotation)
 		if err != nil {
 			return objs, err
 		}
-		u, err := KyamlNodeToUnstructured(n)
+		u, err := mr.KyamlNodeToUnstructured(n)
 		if err != nil {
 			return objs, err
 		}
 		objs = append(objs, u)
 	}
 
-	objs = FilterLocalConfig(objs)
+	objs = mr.FilterLocalConfig(objs)
 
-	err = SetNamespaces(r.Mapper, objs, r.Namespace, r.EnforceNamespace)
+	err = mr.SetNamespaces(r.Mapper, objs, r.Namespace, r.EnforceNamespace)
 	return objs, err
 }

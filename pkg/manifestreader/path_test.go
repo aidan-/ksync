@@ -10,6 +10,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	cmdtesting "k8s.io/kubectl/pkg/cmd/testing"
+	mr "sigs.k8s.io/cli-utils/pkg/manifestreader"
 	"sigs.k8s.io/kustomize/kyaml/kio/kioutil"
 )
 
@@ -66,7 +67,7 @@ func TestPathManifestReader_Read(t *testing.T) {
 
 			objs, err := (&PathManifestReader{
 				Path: dir,
-				ReaderOptions: ReaderOptions{
+				ReaderOptions: mr.ReaderOptions{
 					Mapper:           mapper,
 					Namespace:        tc.namespace,
 					EnforceNamespace: tc.enforceNamespace,

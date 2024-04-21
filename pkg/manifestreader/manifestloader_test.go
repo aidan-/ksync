@@ -11,6 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	cmdtesting "k8s.io/kubectl/pkg/cmd/testing"
+	mr "sigs.k8s.io/cli-utils/pkg/manifestreader"
 )
 
 func TestMReader_Read(t *testing.T) {
@@ -61,7 +62,7 @@ func TestMReader_Read(t *testing.T) {
 				tc.path = dir
 			}
 
-			objs, err := mReader(tc.path, stringReader, ReaderOptions{
+			objs, err := mReader(tc.path, stringReader, mr.ReaderOptions{
 				Mapper:           mapper,
 				Namespace:        tc.namespace,
 				EnforceNamespace: tc.enforceNamespace,
