@@ -35,8 +35,8 @@ import (
 func main() {
 	cmd := &cobra.Command{
 		Use:   "kapply",
-		Short: "Perform cluster operations using declarative configuration",
-		Long:  "Perform cluster operations using declarative configuration",
+		Short: "forked - Perform cluster operations using declarative configuration",
+		Long:  "forked - Perform cluster operations using declarative configuration",
 		// We silence error reporting from Cobra here since we want to improve
 		// the error messages coming from the commands.
 		SilenceErrors: true,
