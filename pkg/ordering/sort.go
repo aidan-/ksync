@@ -76,7 +76,6 @@ func computeGroupKind2index() map[schema.GroupKind]int {
 		{Group: "", Kind: "ResourceQuota"},
 		{Group: "storage.k8s.io", Kind: "StorageClass"},
 		{Group: "apiextensions.k8s.io", Kind: "CustomResourceDefinition"},
-		{Group: "admissionregistration.k8s.io", Kind: "MutatingWebhookConfiguration"},
 		{Group: "", Kind: "ServiceAccount"},
 		{Group: "extensions", Kind: "PodSecurityPolicy"}, // deprecated=1.11, removed=1.16
 		{Group: "policy", Kind: "PodSecurityPolicy"},     // deprecated=1.21, removed=1.25
@@ -96,6 +95,7 @@ func computeGroupKind2index() map[schema.GroupKind]int {
 		{Group: "policy", Kind: "PodDisruptionBudget"},
 	}
 	orderLast := []schema.GroupKind{
+		{Group: "admissionregistration.k8s.io", Kind: "MutatingWebhookConfiguration"},
 		{Group: "admissionregistration.k8s.io", Kind: "ValidatingWebhookConfiguration"},
 	}
 	kind2indexResult := make(map[schema.GroupKind]int, len(orderFirst)+len(orderLast))
