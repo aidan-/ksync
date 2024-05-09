@@ -1,6 +1,7 @@
 package syncwave
 
 import (
+	"fmt"
 	"strconv"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -38,4 +39,14 @@ func ReadAnnotation(u *unstructured.Unstructured) (int, error) {
 	}
 
 	return wave, nil
+}
+
+// AddAnnotation adds the sync-wave annotation to the provided Unstructured
+func AddAnnotation(obj *unstructured.Unstructured, wave int) {
+	annotations := obj.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
+	}
+	annotations[Annotation] = fmt.Sprintf("%d", wave)
+	obj.SetAnnotations(annotations)
 }

@@ -6,13 +6,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aidan-/ksync/pkg/waveapply"
+	waveapply "github.com/aidan-/ksync/pkg/waveapply"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 	"k8s.io/kubectl/pkg/util/i18n"
 	"sigs.k8s.io/cli-utils/cmd/flagutils"
-	"sigs.k8s.io/cli-utils/pkg/apply"
 	"sigs.k8s.io/cli-utils/pkg/common"
 	"sigs.k8s.io/cli-utils/pkg/inventory"
 	"sigs.k8s.io/cli-utils/pkg/manifestreader"
@@ -137,7 +136,7 @@ func (r *Runner) RunE(cmd *cobra.Command, args []string) error {
 
 	// Run the applier. It will return a channel where we can receive updates
 	// to keep track of progress and any issues.
-	a, err := apply.NewApplierBuilder().
+	a, err := waveapply.NewApplierBuilder().
 		WithFactory(r.factory).
 		WithInventoryClient(invClient).
 		Build()
@@ -150,7 +149,7 @@ func (r *Runner) RunE(cmd *cobra.Command, args []string) error {
 		r.printStatusEvents = true
 	}
 
-	options := apply.ApplierOptions{
+	options := waveapply.ApplierOptions{
 		ServerSideOptions: r.serverSideOptions,
 		ReconcileTimeout:  r.reconcileTimeout,
 		// If we are not waiting for status, tell the applier to not
@@ -163,8 +162,7 @@ func (r *Runner) RunE(cmd *cobra.Command, args []string) error {
 		InventoryPolicy:        inventoryPolicy,
 	}
 
-	waveRunner := waveapply.NewWaveApplier()
-	ch := waveRunner.Run(ctx, inv, objs, a, options)
+	ch := a.Run(ctx, inv, objs, options)
 
 	// The printer will print updates from the channel. It will block
 	// until the channel is closed.

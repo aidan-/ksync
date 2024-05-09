@@ -13,6 +13,11 @@ func GroupUnstructureds(objects object.UnstructuredSet) ([]int, map[int]object.U
 		if err != nil {
 			return nil, nil, err
 		}
+
+		// wave 0 could be a default value - explicitly add annotation.
+		if wave == 0 {
+			AddAnnotation(obj, wave)
+		}
 		grouped[wave] = append(grouped[wave], obj)
 	}
 
