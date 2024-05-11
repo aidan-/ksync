@@ -9,6 +9,7 @@ import (
 	waveapply "github.com/aidan-/ksync/pkg/waveapply"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/client-go/rest"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 	"k8s.io/kubectl/pkg/util/i18n"
 	"sigs.k8s.io/cli-utils/cmd/flagutils"
@@ -86,6 +87,24 @@ type Runner struct {
 	printStatusEvents      bool
 }
 
+func restConfigClientSideRateLimits(qps float32, burst int) func(f cmdutil.Factory) (*rest.Config, error) {
+	return func(f cmdutil.Factory) (*rest.Config, error) {
+		if f == nil {
+			return nil, fmt.Errorf("a factory must be provided")
+		}
+
+		restConfig, err := f.ToRESTConfig()
+		if err != nil {
+			return nil, fmt.Errorf("error getting rest config: %v", err)
+		}
+
+		restConfig.QPS = qps
+		restConfig.Burst = burst
+
+		return restConfig, nil
+	}
+}
+
 func (r *Runner) RunE(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	// If specified, cancel with timeout.
@@ -134,11 +153,18 @@ func (r *Runner) RunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// TODO(aidan): change structure
+	restConfig, err := restConfigClientSideRateLimits(200, 500)(r.factory)
+	if err != nil {
+		return err
+	}
+
 	// Run the applier. It will return a channel where we can receive updates
 	// to keep track of progress and any issues.
 	a, err := waveapply.NewApplierBuilder().
 		WithFactory(r.factory).
 		WithInventoryClient(invClient).
+		WithRestConfig(restConfig).
 		Build()
 	if err != nil {
 		return err
