@@ -313,6 +313,53 @@ func (a *Applier) runWaves(ctx context.Context, waves []syncWave, options Applie
 	return eventChannel
 }
 
+// handleSyncWaveShuffles ensures that Unstructured's that have moved between
+// sync waves since the last execution are correctly modified to be associated
+// to their new wave inventory to avoid pruning or adoption errors.
+func handleSyncWaveShuffles(waves []syncWave) ([]syncWave, error) {
+	applyObjsToWave := make(map[string]int)
+	// Iterate through each wave and build up a map of obj IDs to wave int
+	for _, wave := range waves {
+		for _, unstructured := range wave.applyObjs {
+			obj := object.UnstructuredToObjMetadata(unstructured)
+			id := obj.String()
+
+			if _, exists := applyObjsToWave[id]; exists {
+				// Double handling of unstructured - duplicate resource?
+				// TODO(aidan): handle error scenario with event emitting
+				panic("duplicate resource detected")
+			}
+
+			applyObjsToWave[id] = wave.wave
+		}
+	}
+
+	// Iterate through all pruneObjs to determine if any objs have been moved
+	// between waves.
+	for _, wave := range waves {
+		tempPrune := wave.pruneObjs[:0]
+
+		for _, unstructured := range wave.pruneObjs {
+			obj := object.UnstructuredToObjMetadata(unstructured)
+			id := obj.String()
+
+			// Identify Objs that exists in the waves pruneObjs but also exists
+			// in a wave's applyObj.  This means an object has been moved to a
+			// different wave since the last execution.
+			if _, exists := applyObjsToWave[id]; !exists {
+				// Remove the moved obj from the pruneObjs to prevent deletion
+				tempPrune = append(tempPrune, unstructured)
+				// TODO(aidan): Update new wave's inventory to add new obj and
+				// update objs inventory annotation to match
+				// or just force-adopt as part of this tool.
+			}
+		}
+		wave.pruneObjs = tempPrune
+	}
+
+	return waves, nil
+}
+
 // Run performs the Apply step. This happens asynchronously with updates
 // on progress and any errors reported back on the event channel.
 // Cancelling the operation or setting timeout on how long to Wait
@@ -333,43 +380,14 @@ func (a *Applier) Run(ctx context.Context, invInfo inventory.Info, objects objec
 	// 1) clean up any 'sync wave' inventory files that are not longer in use (ie, no resources belong to a pre-existig sync wave)
 	// 2) detect resources that have moved between sync waves and ensure they not marked as prune
 	//	  this also means ensuring they are added to the target inv objects inventory before the sync wave begins
-
-	unstructuredToWave := make(map[string]int)
-	// Iterate through each wave and build up a map of obj IDs to wave int
-	for _, wave := range waves {
-		for _, unstructured := range wave.applyObjs {
-			obj := object.UnstructuredToObjMetadata(unstructured)
-			id := obj.String()
-
-			if _, exists := unstructuredToWave[id]; exists {
-				// Double handling of unstructured - duplicate resource?
-				// TODO(aidan): handle error scenario with event emitting
-				panic("duplicate resource detected")
-			}
-
-			unstructuredToWave[id] = wave.wave
-		}
-	}
-
-	// Iterate through all pruneObjs to determine if any objs have been moved
-	// between waves.
-
-	for _, wave := range waves {
-		tempPrune := wave.pruneObjs[:0]
-
-		for _, unstructured := range wave.pruneObjs {
-			obj := object.UnstructuredToObjMetadata(unstructured)
-			id := obj.String()
-
-			if _, exists := unstructuredToWave[id]; !exists {
-				tempPrune = append(tempPrune, unstructured)
-			}
-		}
-		wave.pruneObjs = tempPrune
+	waves, err = handleSyncWaveShuffles(waves)
+	if err != nil {
+		panic("unhandled sync wave shuffle failure")
 	}
 
 	// TODO(aidan): need to now determine if there are any inventory files that need cleaning up..
 	// do this by querying cluster for inventory objects with sync waves not in waves
+	// Add this is a task to the taskqueue
 
 	klog.V(4).Infof("executing sync across %d waves", len(waves))
 	return a.runWaves(ctx, waves, options)
